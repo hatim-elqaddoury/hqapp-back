@@ -10,17 +10,16 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-
 @SuppressWarnings("serial")
 @Entity
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class Collaborateur implements Serializable {
+public class Setting implements Serializable {
 
 	@Id
-	private String idCollab;
-	private String nom;
-	private String prenom;
+	private String id;
+	private String name;
+	private String value;
 	
 }
