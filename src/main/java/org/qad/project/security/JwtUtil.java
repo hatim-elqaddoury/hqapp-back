@@ -12,6 +12,7 @@ import org.apache.log4j.Logger;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
+@SuppressWarnings("unused")
 @Service
 public class JwtUtil {
 	private static final Logger log = Logger.getLogger(JwtUtil.class);
@@ -40,7 +41,6 @@ public class JwtUtil {
 
 	public String generateToken(UserDetails userDetails) {
         Map<String, Object> claims = new HashMap<String, Object>();
-        log.info(this.createToken(claims, userDetails.getUsername()));
         return this.createToken(claims, userDetails.getUsername());
 	}
 

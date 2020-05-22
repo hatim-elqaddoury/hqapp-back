@@ -12,5 +12,5 @@ import lombok.NoArgsConstructor;
 public class ConnectedUser {
 
 	Optional<User> user;
-	Number activeUSers;
+	Number activeUsers;
 }

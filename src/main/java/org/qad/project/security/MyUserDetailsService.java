@@ -23,8 +23,7 @@ public class MyUserDetailsService implements UserDetailsService {
 		try {
 			return new User(this.loginDao.findByEmailOrUsername(login).getEmail(), this.loginDao.findByEmailOrUsername(login).getPassword(), new ArrayList<>());
 		} catch (Exception e) {
-			log.info(e.getMessage());
-			//System.out.println(email + " is disconnected, please refresh the page.");
+			log.info(e);
 			return null;
 		}
 	}

@@ -80,13 +80,18 @@ public class AuthController {
 	@GetMapping({"/getActiveUsers"})
 	public List<Optional<User>> getAllConnected() {
 		
-		List<Optional<User>> res = new ArrayList<Optional<User>>();
-        for ( ActiveUser a : this.activeUsers) {
-             Optional<User> user = (Optional<User>)this.adminService.oneUser(a.getIdUSer());
-            AuthController.log.info((Object)(user.get().getFullname() + " connected"));
-            res.add(user);
-        }
-        return res;
+		try {
+			List<Optional<User>> res = new ArrayList<Optional<User>>();
+			
+			this.activeUsers.forEach(a -> res.add(this.adminService.oneUser(a.getIdUSer())) );
+			
+			res.forEach(a-> log.info(a.get().getUsername() + " is connected"));
+			
+			return res;
+		} catch (Exception e) {
+			log.error(e);
+			return null;
+		}
 	}
 
 	@PostMapping({"/login"})
@@ -94,6 +99,7 @@ public class AuthController {
 		try {
 			this.authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(l.get("login"), UtilsController.encrypt(l.get("password"))));
 			UserDetails userDetails = this.userDetailsService.loadUserByUsername(l.get("login"));
+			if(userDetails==null) return null;
 			String token = this.jwtTokenUtil.generateToken(userDetails);
 			String email = this.jwtTokenUtil.extractEmail(token);
 			Optional<User> user = this.adminService.getUserByEmail(email);
@@ -102,12 +108,10 @@ public class AuthController {
 			return ResponseEntity.ok(new LoginResponse(token));
 		} catch (BadCredentialsException e) {
 			log.error(e.getMessage());
-			return null;
-			//throw new Exception("incorrect username or password", e);
+			return ResponseEntity.badRequest().body("Username/Password combination is not correct, please try again.");
 		} catch (Exception e) {
 			log.error(e.getMessage());
-			return null;
-			//throw new Exception("incorrect username or password", e);
+			return ResponseEntity.badRequest().body("Account not found.");
 		}
 	}
 

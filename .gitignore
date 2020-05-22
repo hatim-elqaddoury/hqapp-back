@@ -10,3 +10,4 @@ target/
 .eclipse
 .settings/org.eclipse.jdt.core.*
 *.MF
+bin/
