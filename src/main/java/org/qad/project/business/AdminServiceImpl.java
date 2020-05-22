@@ -2,57 +2,74 @@ package org.qad.project.business;
 
 import java.util.List;
 import java.util.Optional;
-
 import javax.transaction.Transactional;
-
-import org.qad.project.dao.UserDao;
+import org.qad.project.dao.LoginDao;
 import org.qad.project.dao.SettingDao;
-import org.qad.project.models.User;
+import org.qad.project.dao.UserDao;
+import org.qad.project.models.Login;
 import org.qad.project.models.Setting;
+import org.qad.project.models.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
 @Transactional
 public class AdminServiceImpl implements AdminService {
-	
-
 	@Autowired
 	private UserDao userDao;
-
 	@Autowired
 	private SettingDao settingsDao;
+	@Autowired
+	private LoginDao loginDao;
 
-
-	@Override
 	public List<User> allUsers() {
-		 return userDao.findAll();
+		return this.userDao.findAll();
 	}
 
-	@Override
-	public User findbyNP(String nom, String prenom) {
-		return userDao.findByNomPrenom(nom, prenom);
+	public Optional<User> findByUsername(String username) {
+		return this.userDao.findByUsername(username);
 	}
 
-	@Override
 	public User addUser(User u) {
-		return userDao.saveAndFlush(u);
+		return (User) this.userDao.saveAndFlush(u);
 	}
 
-	@Override
 	public Setting findByKey(String key) {
-		return settingsDao.findByKey(key);
+		return this.settingsDao.findByKey(key);
 	}
 
-	@Override
 	public Setting updateSetting(Setting s) {
-		return settingsDao.saveAndFlush(s);
+		return (Setting) this.settingsDao.saveAndFlush(s);
 	}
 
-	@Override
-	public Optional<User> oneUser(String id) {
-		return userDao.findById(id);
+	public Optional<User> oneUser(String idusername) {
+		return this.userDao.findByIdOrUsername(idusername);
 	}
-	
-	
+
+	public Optional<User> login(String email, String password, Boolean rememberMe) {
+		return this.userDao.findById(this.loginDao.findByEmailAndPassword(email, password).getId());
+	}
+
+	public User register(String fullName, String username, String email, String password) {
+		if (this.loginDao.findByEmail(email) == null) {
+			Login l = this.loginDao.saveAndFlush(new Login(null, username, email, password, "User",  null));
+			
+			return this.addUser(new User(l.getId(), l.getUsername(), fullName,
+					l.getEmail(), l.getRole(), null,  null, "default"));
+		} else {
+			return null;
+		}
+	}
+
+	public Optional<User> find(String id) {
+		return this.userDao.findById(id);
+	}
+
+	public Optional<User> getUserByEmail(String email) {
+		return this.userDao.findById(this.loginDao.findByEmail(email).getId());
+	}
+
+	public User updateUser(User user) {
+		return (User) this.userDao.saveAndFlush(user);
+	}
 }
