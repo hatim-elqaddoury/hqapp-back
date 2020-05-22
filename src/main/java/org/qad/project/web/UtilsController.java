@@ -5,7 +5,6 @@ import java.io.IOException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Base64;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
@@ -58,21 +57,10 @@ public class UtilsController {
 
 	public void addActiveUser(List<ActiveUser> lau, Optional<User> user, String token) {
 		boolean containsOne = false;
-		
-		Iterator var5 = lau.iterator();
-
-		while (var5.hasNext()) {
-			ActiveUser a = (ActiveUser) var5.next();
-			if (a.getIdUSer().equals(((User) user.get()).getIdUser())) {
-				containsOne = true;
-			}
-		}
-
-		if (!containsOne) {
-			lau.add(new ActiveUser(((User) user.get()).getIdUser(), token));
-		}
-
+        for (ActiveUser a : lau) containsOne = a.getIdUSer().equals(user.get().getIdUser());
+        if (!containsOne) lau.add(new ActiveUser(user.get().getIdUser(), token));
 	}
+	
 
 	public byte[] compressBytes(byte[] data) {
 		try {

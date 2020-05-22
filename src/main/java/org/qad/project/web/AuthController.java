@@ -52,29 +52,24 @@ public class AuthController {
 
 	@GetMapping({"/connected"})
 	public ConnectedUser getConnected(@RequestParam String authorisationHeader) {
-		if (authorisationHeader != null && authorisationHeader.startsWith("HQ ")) {
-			String token = authorisationHeader.substring(3);
-			try {
-				String email = this.jwtTokenUtil.extractEmail(token);
-				Optional<User> user = this.adminService.getUserByEmail(email);
-				this.utils.addActiveUser(this.activeUsers, user, token);
+		String token = this.jwtTokenUtil.extractToken(authorisationHeader);
+		try {
+			String email = this.jwtTokenUtil.extractEmail(token);
+			Optional<User> user = this.adminService.getUserByEmail(email);
+			this.utils.addActiveUser(this.activeUsers, user, token);
 
-				return new ConnectedUser(user, this.activeUsers.size());
-					
-			} catch (ExpiredJwtException e) {
-				this.activeUsers.removeIf((elem) -> {
-					return elem.getJwt().equals(token);
-				});
-				log.error(e.getMessage());
-				return null;
-			}catch(Exception e) {
-				log.error(e.getMessage());
-				return null;
-			}
+			return new ConnectedUser(user, this.activeUsers.size());
+				
+		} catch (ExpiredJwtException e) {
+			this.activeUsers.removeIf((elem) -> {
+				return elem.getJwt().equals(token);
+			});
+			log.error(e.getMessage());
+			return null;
+		}catch(Exception e) {
+			log.error(e.getMessage());
+			return null;
 		}
-		log.error("authorisationHeader is not correct.");
-		return null;
-
 	}
 
 	@GetMapping({"/getActiveUsers"})
@@ -96,6 +91,7 @@ public class AuthController {
 
 	@PostMapping({"/login"})
 	public ResponseEntity<?> login(@RequestBody LinkedHashMap<String, String> l) throws Exception {
+		log.info("here");
 		try {
 			this.authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(l.get("login"), UtilsController.encrypt(l.get("password"))));
 			UserDetails userDetails = this.userDetailsService.loadUserByUsername(l.get("login"));
@@ -103,7 +99,7 @@ public class AuthController {
 			String token = this.jwtTokenUtil.generateToken(userDetails);
 			String email = this.jwtTokenUtil.extractEmail(token);
 			Optional<User> user = this.adminService.getUserByEmail(email);
-			log.info((user.get()).getFullname() + " logged in");
+			log.info((user.get()).getUsername() + " logged in");
 			this.utils.addActiveUser(this.activeUsers, user, token);
 			return ResponseEntity.ok(new LoginResponse(token));
 		} catch (BadCredentialsException e) {
@@ -117,25 +113,21 @@ public class AuthController {
 
 	@PostMapping({"/logout"})
 	public ResponseEntity<?> logout(@RequestParam String authorisationHeader) throws Exception {
-		if (authorisationHeader != null && authorisationHeader.startsWith("HQ ")) {
-			String token = authorisationHeader.substring(3);
-			this.activeUsers.removeIf((elem) -> {
-				return elem.getJwt().equals(token);
-			});
+		String token = this.jwtTokenUtil.extractToken(authorisationHeader);
+		this.activeUsers.removeIf((elem) -> {
+			return elem.getJwt().equals(token);
+		});
 
-			try {
-				String email = this.jwtTokenUtil.extractEmail(token);
-				Optional<User> user = this.adminService.getUserByEmail(email);
-				this.activeUsers.removeIf((elem) -> {
-					return elem.getIdUSer().equals((user.get()).getIdUser());
-				});
-				log.info((user.get()).getFullname() + " logged out");
-				return null;
-			} catch (Exception e) {
-				log.error("(logout) " + e.getMessage());
-				return null;
-			}
-		} else {
+		try {
+			String email = this.jwtTokenUtil.extractEmail(token);
+			Optional<User> user = this.adminService.getUserByEmail(email);
+			this.activeUsers.removeIf((elem) -> {
+				return elem.getIdUSer().equals((user.get()).getIdUser());
+			});
+			log.info((user.get()).getUsername() + " logged out");
+			return null;
+		} catch (Exception e) {
+			log.error("(logout) " + e.getMessage());
 			return null;
 		}
 	}
@@ -152,7 +144,7 @@ public class AuthController {
 				if (u != null) {
 					UserDetails userDetails = this.userDetailsService.loadUserByUsername(l.get("email"));
 					String token = this.jwtTokenUtil.generateToken(userDetails);
-					log.info(u.getFullname() + " registred");
+					log.info(u.getUsername() + " registred");
 					return ResponseEntity.ok(new LoginResponse(token));
 				} else {
 					return ResponseEntity.badRequest().body("account already exist");
