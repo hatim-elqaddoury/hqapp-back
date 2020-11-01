@@ -43,7 +43,7 @@ public class JwtUtil {
 	}
 
 	public Date extractExpiration(String token) {
-		return (Date) this.extractClaim(token, Claims::getExpiration);
+		return this.extractClaim(token, Claims::getExpiration);
 	}
 
 	public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
@@ -66,9 +66,28 @@ public class JwtUtil {
 
 	public String createToken(Map<String, Object> claims, String subject) {
 		try {
-			log.info( Long.parseLong(engine.eval(EXPIRATION_DATE).toString()));
 			return Jwts.builder().setClaims(claims).setSubject(subject).setIssuedAt(new Date(System.currentTimeMillis()))
 					.setExpiration(new Date(System.currentTimeMillis() + Long.parseLong(engine.eval(EXPIRATION_DATE).toString()))) 
+					.signWith(SignatureAlgorithm.HS256, this.SECRET_KEY).compact();
+		} catch (NumberFormatException e) {
+			log.error(e.getMessage());
+			return null;
+		} catch (ScriptException e) {
+			log.error(e.getMessage());
+			return null;
+		}
+	}
+	
+
+	public String generateTokenExpDate(UserDetails userDetails, String expDate) {
+        Map<String, Object> claims = new HashMap<String, Object>();
+        return this.createTokenExipnDate(claims, userDetails.getUsername(), expDate);
+	}
+	
+	public String createTokenExipnDate(Map<String, Object> claims, String subject, String expDate) {
+		try {
+			return Jwts.builder().setClaims(claims).setSubject(subject).setIssuedAt(new Date(System.currentTimeMillis()))
+					.setExpiration(new Date(System.currentTimeMillis() + Long.parseLong(engine.eval(expDate).toString()))) 
 					.signWith(SignatureAlgorithm.HS256, this.SECRET_KEY).compact();
 		} catch (NumberFormatException e) {
 			log.error(e.getMessage());

@@ -8,9 +8,9 @@ import org.springframework.stereotype.Service;
 
 @Service
 public interface AdminService {
-	User addUser(User user);
+	User addUser(Optional<User> user);
 
-	User updateUser(User user);
+	User updateUser(Optional<User> user);
 
 	Optional<User> find(String id);
 

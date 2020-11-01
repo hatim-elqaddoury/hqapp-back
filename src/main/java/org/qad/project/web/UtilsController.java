@@ -8,25 +8,42 @@ import java.util.Base64;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
+import java.util.Properties;
 import java.util.zip.DataFormatException;
 import java.util.zip.Deflater;
 import java.util.zip.Inflater;
 import javax.crypto.Cipher;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
+import javax.mail.Message;
+import javax.mail.MessagingException;
+import javax.mail.PasswordAuthentication;
+import javax.mail.Session;
+import javax.mail.Transport;
+import javax.mail.internet.InternetAddress;
+import javax.mail.internet.MimeMessage;
+
 import org.apache.log4j.Logger;
+import org.json.JSONObject;
+import org.qad.project.assets.MailTemplate;
 import org.qad.project.models.ActiveUser;
 import org.qad.project.models.User;
+import org.springframework.stereotype.Service;
 
+
+@Service
 public class UtilsController {
 	private static final Logger log = Logger.getLogger(UtilsController.class);
-	SimpleDateFormat formater = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss.SSS ");
-	DateFormat formater2 = DateFormat.getDateTimeInstance(2, 2, new Locale("FR", "fr"));
+	public static SimpleDateFormat formater = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss.SSS ");
+	public static DateFormat formater2 = DateFormat.getDateTimeInstance(2, 2, new Locale("FR", "fr"));
 	
 	private static final String key = "aesEncryptionKey";
 	private static final String initVector = "encryptionIntVec";
+	
+	private static final boolean EnableEmails = true;
+	
 
-	public static String encrypt(String value) {
+	public static Object encrypt(String value) {
 		try {
 			IvParameterSpec iv = new IvParameterSpec(initVector.getBytes("UTF-8"));
 			SecretKeySpec skeySpec = new SecretKeySpec(key.getBytes("UTF-8"), "AES");
@@ -35,13 +52,13 @@ public class UtilsController {
 			cipher.init(Cipher.ENCRYPT_MODE, skeySpec, iv);
 			byte[] encrypted = cipher.doFinal(value.getBytes());
 			return Base64.getEncoder().encodeToString(encrypted);
-		} catch (Exception var5) {
-			log.error(var5.getMessage());
+		} catch (Exception e) {
+			log.error(e.getMessage());
 			return null;
 		}
 	}
 
-	public static String decrypt(String encrypted) {
+	public static Object decrypt(String encrypted) {
 		try {
 			IvParameterSpec iv = new IvParameterSpec(initVector.getBytes("UTF-8"));
 			SecretKeySpec skeySpec = new SecretKeySpec(key.getBytes("UTF-8"), "AES");
@@ -55,9 +72,18 @@ public class UtilsController {
 		}
 	}
 
+	public String ToEncryptedJson(String obj) {
+		return new JSONObject().put("encrypted",encrypt(obj)).toString();
+	}
+	
 	public void addActiveUser(List<ActiveUser> lau, Optional<User> user, String token) {
 		boolean containsOne = false;
-        for (ActiveUser a : lau) containsOne = a.getIdUSer().equals(user.get().getIdUser());
+        for (ActiveUser a : lau) {
+        	if( a.getIdUSer().equals(user.get().getIdUser())) {
+        		a.setJwt(token);
+        		containsOne=true;
+        	}
+        }
         if (!containsOne) lau.add(new ActiveUser(user.get().getIdUser(), token));
 	}
 	
@@ -110,4 +136,48 @@ public class UtilsController {
 
 		return outputStream.toByteArray();
 	}
+	
+	
+	public static boolean sendMail(User USR, String SUBJECT, String CONTENT, String SENDER, String PASSWORD, String HOST, String PORT) {
+		if(EnableEmails) {
+			Properties properties = System.getProperties();
+	        // Setup mail server
+	        properties.put("mail.smtp.host", HOST);
+	        properties.put("mail.smtp.port", PORT);
+	        properties.put("mail.smtp.ssl.enable", "true");
+	        properties.put("mail.smtp.auth", "true");
+
+	        // Get the Session object.// and pass username and password
+	        Session session = Session.getInstance(properties, new javax.mail.Authenticator() {
+	            protected PasswordAuthentication getPasswordAuthentication() {
+	                return new PasswordAuthentication(SENDER, PASSWORD);
+	            }
+	        });
+
+	        // Used to debug SMTP issues
+	        //session.setDebug(true);
+	        
+	        String MailContent = MailTemplate.GetMailTemplate(USR, CONTENT);
+	        
+
+	        try {
+	            MimeMessage message = new MimeMessage(session);
+	            message.setFrom(new InternetAddress(SENDER));
+	            message.addRecipient(Message.RecipientType.TO, new InternetAddress(USR.getEmail()));
+	            message.setSubject(SUBJECT);
+	            message.setContent(MailContent, "text/html; charset=utf-8");
+
+	            // Send message
+	            Transport.send(message);
+	            log.info("Email sent to "+USR.getFullname()+" : "+SUBJECT);
+	        } catch (MessagingException mex) {
+	            mex.printStackTrace();
+	        }
+	        return true;
+		}
+		return false;
+        
+	}
+	
+	
 }

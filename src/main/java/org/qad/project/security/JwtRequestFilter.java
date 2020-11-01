@@ -9,6 +9,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -65,13 +66,23 @@ public class JwtRequestFilter extends OncePerRequestFilter {
 				}
 			} catch (ExpiredJwtException e) {
 				log.info("(doFilterInternal) " + e.getMessage());
+				response.setStatus(HttpStatus.INTERNAL_SERVER_ERROR.value());
 				return;
 			}catch(Exception e) {
 				log.error(e.getMessage());
 				return;
 			}
+			
+			try {
+	            filterChain.doFilter(request, response);
+	        } catch (RuntimeException e) {
+	        	log.error(e.getMessage());
+	        	log.error(HttpStatus.INTERNAL_SERVER_ERROR.value());
+	            response.setStatus(HttpStatus.INTERNAL_SERVER_ERROR.value());
+	        }
+			
 
-			filterChain.doFilter(request, response);
+			
 		}
 	}
 }

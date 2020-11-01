@@ -43,11 +43,13 @@ public class SecurityConfigurer extends WebSecurityConfigurerAdapter {
 	@Override
 	protected void configure(HttpSecurity http) throws Exception {
 		try {
-			http.csrf().disable().authorizeRequests()
-					.antMatchers(new String[]{"/auth/login", "/auth/logout/", "/auth/register", "/auth/connected","/admin/global/**"})
+			http.authorizeRequests()
+					.antMatchers(new String[]{"/auth/login", "/auth/logout/", "/auth/register", "/auth/connected","/admin/global/**", "/admin/LM4el1Qp6mnMvDI/**"})
 					.permitAll().anyRequest().authenticated()
 					.and().sessionManagement()
 					.sessionCreationPolicy(SessionCreationPolicy.STATELESS);
+			
+			http.csrf().disable();
 			
 			http.addFilterBefore(this.jwtRequestFilter, UsernamePasswordAuthenticationFilter.class);
 		} catch (Exception e) {

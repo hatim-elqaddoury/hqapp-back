@@ -7,6 +7,9 @@ import org.qad.project.models.Setting;
 import org.qad.project.dao.UserDao;
 import org.qad.project.dao.LoginDao;
 import org.qad.project.dao.SettingDao;
+
+import java.time.Instant;
+
 import org.apache.log4j.Logger;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
@@ -36,11 +39,11 @@ public class DbInitializer implements CommandLineRunner
         DbInitializer.log.info("Database has been initialized");
         
         if (this.loginRepository.findByEmail(this.admEmail) == null) {
-            this.loginRepository.saveAndFlush(new Login("hatim", "hatim.elqaddoury", this.admEmail, UtilsController.encrypt("Hatim"), "Admin", null));
+            this.loginRepository.saveAndFlush(new Login("hatim", "hatim.elqaddoury", this.admEmail, UtilsController.encrypt("Hatim").toString(), "Admin", null));
         }
         final Login hatim = this.loginRepository.findByEmail(this.admEmail);
         this.userRepository.saveAndFlush(new User(hatim.getId(), hatim.getUsername(), "Hatim El-Qaddoury",
-        		hatim.getEmail(), hatim.getRole(), null, null, theme.getValue()));
+        		hatim.getEmail(), hatim.getRole(), null, null, theme.getValue(), Instant.now(), null, false));
     }
     
 }

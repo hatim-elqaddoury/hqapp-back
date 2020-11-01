@@ -1,5 +1,6 @@
 package org.qad.project.business;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import javax.transaction.Transactional;
@@ -30,8 +31,8 @@ public class AdminServiceImpl implements AdminService {
 		return this.userDao.findByUsername(username);
 	}
 
-	public User addUser(User u) {
-		return (User) this.userDao.saveAndFlush(u);
+	public User addUser(Optional<User> u) {
+		return (u.get()!=null) ?this.userDao.saveAndFlush(u.get()) :null;
 	}
 
 	public Setting findByKey(String key) {
@@ -54,8 +55,8 @@ public class AdminServiceImpl implements AdminService {
 		if (this.loginDao.findByEmail(email) == null) {
 			Login l = this.loginDao.saveAndFlush(new Login(null, username, email, password, "User",  null));
 			
-			return this.addUser(new User(l.getId(), l.getUsername(), fullName,
-					l.getEmail(), l.getRole(), null,  null, "default"));
+			return this.addUser(Optional.of(new User(l.getId(), l.getUsername(), fullName,
+					l.getEmail(), l.getRole(), null,  null, "default", Instant.now(), null, false)));
 		} else {
 			return null;
 		}
@@ -69,7 +70,9 @@ public class AdminServiceImpl implements AdminService {
 		return this.userDao.findById(this.loginDao.findByEmail(email).getId());
 	}
 
-	public User updateUser(User user) {
-		return (User) this.userDao.saveAndFlush(user);
+	public User updateUser(Optional<User> user) {
+		return (user.get()!=null) ?this.userDao.saveAndFlush(user.get()) :null;
 	}
+
+
 }
