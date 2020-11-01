@@ -103,6 +103,17 @@
 			<artifactId>jaxb-api</artifactId>
 		</dependency>
 		
+		<dependency>
+		    <groupId>org.json</groupId>
+		    <artifactId>json</artifactId>
+		    <version>20200518</version>
+		</dependency>
+		
+		<dependency>
+		    <groupId>com.sun.mail</groupId>
+		    <artifactId>javax.mail</artifactId>
+		    <version>1.6.2</version><!--$NO-MVN-MAN-VER$-->
+		</dependency>
 		
 	</dependencies>
 
