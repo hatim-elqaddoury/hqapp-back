@@ -1,0 +1,30 @@
+{
+	"properties": 
+	[
+	  {
+	    "name": "app.db-init",
+	    "type": "java.lang.String",
+	    "description": "A description for 'app.db-init'"
+	  },
+	  {
+	    "name": "jwt.expiration-date",
+	    "type": "java.lang.String",
+	    "description": "A description for 'jwt.expiration-date'"
+	  },
+	  {
+	    "name": "jwt.secret-key",
+	    "type": "java.lang.String",
+	    "description": "A description for 'jwt.secret-key'"
+	  },
+	  {
+	    "name": "jwt.header-prefix",
+	    "type": "java.lang.String",
+	    "description": "A description for 'jwt.header-prefix'"
+	  },
+	  {
+	    "name": "jwt.header-name",
+	    "type": "java.lang.String",
+	    "description": "A description for 'jwt.header-name'"
+	  }
+	]
+}

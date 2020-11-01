@@ -8,22 +8,42 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
 
+import javax.script.ScriptEngine;
+import javax.script.ScriptEngineManager;
+import javax.script.ScriptException;
+
 import org.apache.log4j.Logger;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
-@SuppressWarnings("unused")
 @Service
 public class JwtUtil {
+	
+	ScriptEngineManager mgr = new ScriptEngineManager();
+    ScriptEngine engine = mgr.getEngineByName("JavaScript");
 	private static final Logger log = Logger.getLogger(JwtUtil.class);
-	private String SECRET_KEY = "secret";
+
+	@Value("${jwt.expiration-date}")
+	private String EXPIRATION_DATE;
+	
+	@Value("${jwt.header-prefix}")
+	private String HEADER_PREFIX;
+	
+	@Value("${jwt.secret-key}")
+	private String SECRET_KEY;
+	
+	public String extractToken(String authorisationHeader) {
+		return (authorisationHeader != null && authorisationHeader.startsWith(HEADER_PREFIX.trim()))
+			? authorisationHeader.substring(HEADER_PREFIX.length()) : null;
+	}
 
 	public String extractEmail(String token) {
-		return (String) this.extractClaim(token, Claims::getSubject);
+		return this.extractClaim(token, Claims::getSubject);
 	}
 
 	public Date extractExpiration(String token) {
-		return (Date) this.extractClaim(token, Claims::getExpiration);
+		return this.extractClaim(token, Claims::getExpiration);
 	}
 
 	public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
@@ -45,14 +65,42 @@ public class JwtUtil {
 	}
 
 	public String createToken(Map<String, Object> claims, String subject) {
-		return Jwts.builder().setClaims(claims).setSubject(subject).setIssuedAt(new Date(System.currentTimeMillis()))
-				.setExpiration(new Date(System.currentTimeMillis() * 1000 * 60 * 60 * 1/15)) 
-				.signWith(SignatureAlgorithm.HS256, this.SECRET_KEY).compact();
+		try {
+			return Jwts.builder().setClaims(claims).setSubject(subject).setIssuedAt(new Date(System.currentTimeMillis()))
+					.setExpiration(new Date(System.currentTimeMillis() + Long.parseLong(engine.eval(EXPIRATION_DATE).toString()))) 
+					.signWith(SignatureAlgorithm.HS256, this.SECRET_KEY).compact();
+		} catch (NumberFormatException e) {
+			log.error(e.getMessage());
+			return null;
+		} catch (ScriptException e) {
+			log.error(e.getMessage());
+			return null;
+		}
+	}
+	
+
+	public String generateTokenExpDate(UserDetails userDetails, String expDate) {
+        Map<String, Object> claims = new HashMap<String, Object>();
+        return this.createTokenExipnDate(claims, userDetails.getUsername(), expDate);
+	}
+	
+	public String createTokenExipnDate(Map<String, Object> claims, String subject, String expDate) {
+		try {
+			return Jwts.builder().setClaims(claims).setSubject(subject).setIssuedAt(new Date(System.currentTimeMillis()))
+					.setExpiration(new Date(System.currentTimeMillis() + Long.parseLong(engine.eval(expDate).toString()))) 
+					.signWith(SignatureAlgorithm.HS256, this.SECRET_KEY).compact();
+		} catch (NumberFormatException e) {
+			log.error(e.getMessage());
+			return null;
+		} catch (ScriptException e) {
+			log.error(e.getMessage());
+			return null;
+		}
 	}
 
 	public Boolean validateToken(String token, UserDetails userDetails) {
 		String email = this.extractEmail(token);
-		return token != null && userDetails != null
+		return (token != null && userDetails != null)
 				? email.equals(userDetails.getUsername()) && !this.isTokenExpired(token)
 				: false;
 		/*
