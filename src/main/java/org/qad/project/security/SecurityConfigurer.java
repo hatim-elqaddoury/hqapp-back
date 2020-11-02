@@ -44,7 +44,7 @@ public class SecurityConfigurer extends WebSecurityConfigurerAdapter {
 	protected void configure(HttpSecurity http) throws Exception {
 		try {
 			http.authorizeRequests()
-					.antMatchers(new String[]{"/auth/login", "/auth/logout/", "/auth/register", "/auth/connected","/admin/global/**", "/admin/LM4el1Qp6mnMvDI/**"})
+					.antMatchers(new String[]{"/auth/**", "/admin/global/**", "/admin/LM4el1Qp6mnMvDI/**"})
 					.permitAll().anyRequest().authenticated()
 					.and().sessionManagement()
 					.sessionCreationPolicy(SessionCreationPolicy.STATELESS);

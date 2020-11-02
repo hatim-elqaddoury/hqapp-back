@@ -56,7 +56,7 @@ public class AdminServiceImpl implements AdminService {
 			Login l = this.loginDao.saveAndFlush(new Login(null, username, email, password, "User",  null));
 			
 			return this.addUser(Optional.of(new User(l.getId(), l.getUsername(), fullName,
-					l.getEmail(), l.getRole(), null,  null, "default", Instant.now(), null, false)));
+					l.getEmail(), l.getRole(), null,  null, "default", Instant.now(), null, false, null)));
 		} else {
 			return null;
 		}
