@@ -43,7 +43,7 @@ public class DbInitializer implements CommandLineRunner
         }
         final Login hatim = this.loginRepository.findByEmail(this.admEmail);
         this.userRepository.saveAndFlush(new User(hatim.getId(), hatim.getUsername(), "Hatim El-Qaddoury",
-        		hatim.getEmail(), hatim.getRole(), null, null, theme.getValue(), Instant.now(), null, false));
+        		hatim.getEmail(), hatim.getRole(), null, null, theme.getValue(), Instant.now(), null, false, "Dijon, France"));
     }
     
 }
