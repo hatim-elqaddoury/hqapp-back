@@ -40,6 +40,9 @@ public class UtilsController {
 	private static final String key = "aesEncryptionKey";
 	private static final String initVector = "encryptionIntVec";
 	
+	/**
+	 * Enable or disable sending mails
+	 */
 	private static final boolean EnableEmails = true;
 	
 

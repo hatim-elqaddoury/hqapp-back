@@ -11,6 +11,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.JSONStringer;
+import org.qad.project.assets.MailHtmlResponse;
 import org.qad.project.business.AdminService;
 import org.qad.project.models.Encrypted;
 import org.qad.project.models.Setting;
@@ -139,7 +140,7 @@ public class AdminController {
 		User user = (this.adminService.oneUser(id).isPresent())?this.adminService.oneUser(id).get():null;
 		
 		UserDetails userDetails = this.userDetailsService.loadUserByUsername(user.getEmail());
-		String token = this.jwtTokenUtil.generateTokenExpDate(userDetails, "1000 * 60 * 1");
+		String token = this.jwtTokenUtil.generateTokenExpDate(userDetails, "1000 * 60 * 10");
 		
 		String link=  "http://"+SERVER_ADDRESS+":"+SERVER_PORT+"/admin/LM4el1Qp6mnMvDI/wuuqgfihmFZedBRvDMhuKzteKfr?token="+token;
 		
@@ -149,11 +150,11 @@ public class AdminController {
 			
 		if(UtilsController.sendMail(
 				user, 
-				"[Important] HQApp - Verify your E-mail", 
+				"[Important] HQApp - Verify your account", 
 				content,
 				SENDER, PASSWORD, HOST, PORT))
-			return ResponseEntity.ok(new Encrypted("Confirmation email has been sent to the recipient."));
-		return ResponseEntity.badRequest().body(new Encrypted("Something went wrong."));
+			return ResponseEntity.ok(new Encrypted("Confirmation email has been sent to your address."));
+		return ResponseEntity.badRequest().body(new Encrypted("Something went wrong. <Emailing is disabled>"));
 	}
 	
 	@GetMapping({"/LM4el1Qp6mnMvDI/wuuqgfihmFZedBRvDMhuKzteKfr"})
@@ -171,78 +172,29 @@ public class AdminController {
 				this.adminService.updateUser(Optional.of(user));
 			
 				if(UtilsController.sendMail(
-						user, 
-						"[Important] HQApp - Welcome "+user.getFullname(), 
-						"<p> Your Email adress has been verified ;) + ((welcome message)) <p/>",
-						SENDER, PASSWORD, HOST, PORT)) {
-						
-						log.info(user.getUsername()+" has successfully verified his email address: "+user.getEmail());
-						return ResponseEntity.ok("<table style=\"background-color: transparent;\"\n" + 
-						"                   width=\"100%\" cellspacing=\"0\" cellpadding=\"0\"\n" + 
-						"                   bgcolor=\"transparent\">\n" + 
-						"                   <tbody>\n" + 
-						"                   <tr>\n" + 
-						"                   <td style=\"font-size: 19px;\" "+ 
-						"                   align=\"center\">\n" + 
-						"                   <br/>Your email address has been successfully verified. <br/><br/>"+
-						"                   </td>\n" + 
-						"                   </tr>\n" + 
-						"                   <tr>\n" + 
-						"                   <td align=\"center\" style=\"font-size:10;\"><a\n" + 
-						"                   target=\"_blank\"><img style=\"border-radius: 50%;\"\n" + 
-						"                   src=\" https://www.pinclipart.com/picdir/big/387-3875888_verified-account-icon-twitter-verified-account-logo-clipart.png  \"\n" + 
-						"                   alt=\"Hatim El-Qaddoury\"\n" + 
-						"                   title=\"Hatim El-Qaddoury\\\"\n" + 
-						"                   width=\"90\"></a></td>\n" + 
-						"                   </tr>\n" + 
-						"                   <tr>\n" + 
-						"                   <td class=\"esd-block-text es-p15r es-p15l\"\n" + 
-						"                   align=\"center\">\n" +  
-						"                   <p style=\"color: #666666;\">\n" + 
-						"                   <br/>HQApp team\n" + 
-						"                   </p>\n" + 
-						"                   </td>\n" + 
-						"                   </tr>\n" + 
-						"                   </tbody>\n" + 
-						"                   </table>\n" 
-						);
+					user, 
+					"[Important] HQApp - Welcome "+user.getFullname(), 
+					"<p> Your Email adress has been verified ;) + ((welcome message)) <p/>",
+					SENDER, PASSWORD, HOST, PORT)) {
+					
+					log.info(user.getUsername()+" has successfully verified his email address: "+user.getEmail());
+					return ResponseEntity.ok(MailHtmlResponse.GetMailHtmlResponse(
+							"Your email address has been successfully verified.", 
+							"https://www.pinclipart.com/picdir/big/387-3875888_verified-account-icon-twitter-verified-account-logo-clipart.png"
+							));
 				}
-				return ResponseEntity.badRequest().body(new Encrypted("Something went wrong."));
+				return ResponseEntity.badRequest().body(new Encrypted("Something went wrong. <Emailing is disabled>"));
 			}else {
 				log.info(user.getUsername()+" tried to reverify the email address: "+user.getEmail());
-				return ResponseEntity.badRequest().body("<table style=\"background-color: transparent;\"\n" + 
-						"                   width=\"100%\" cellspacing=\"0\" cellpadding=\"0\"\n" + 
-						"                   bgcolor=\"transparent\">\n" + 
-						"                   <tbody>\n" + 
-						"                   <tr>\n" + 
-						"                   <td style=\"font-size: 19px;\" "+ 
-						"                   align=\"center\">\n" + 
-						"                   <br/>Your email address has already been verified.<br/><br/>"+
-						"                   </td>\n" + 
-						"                   </tr>\n" + 
-						"                   <tr>\n" + 
-						"                   <td align=\"center\" style=\"font-size:10;\"><a\n" + 
-						"                   target=\"_blank\"><img style=\"border-radius: 50%;\"\n" + 
-						"                   src=\" https://upload.wikimedia.org/wikipedia/commons/thumb/e/e4/Twitter_Verified_Badge.svg/1200px-Twitter_Verified_Badge.svg.png  \"\n" + 
-						"                   alt=\"Hatim El-Qaddoury\"\n" + 
-						"                   title=\"Hatim El-Qaddoury\\\"\n" + 
-						"                   width=\"90\"></a></td>\n" + 
-						"                   </tr>\n" + 
-						"                   <tr>\n" + 
-						"                   <td class=\"esd-block-text es-p15r es-p15l\"\n" + 
-						"                   align=\"center\">\n" +
-						"                   <p style=\"color: #666666;\">\n" + 
-						"                   <br/>HQApp team\n" + 
-						"                   </p>\n" + 
-						"                   </td>\n" + 
-						"                   </tr>\n" + 
-						"                   </tbody>\n" + 
-						"                   </table>\n" 
-						);
+				
+				return ResponseEntity.ok(MailHtmlResponse.GetMailHtmlResponse(
+						"Your email address has already been verified.", 
+						"https://upload.wikimedia.org/wikipedia/commons/thumb/e/e4/Twitter_Verified_Badge.svg/1200px-Twitter_Verified_Badge.svg.png"
+						));
 			}
 		} catch (Exception e) {
 			log.info("link expired while trying to verify an email address.");
-			return ResponseEntity.badRequest().body("Link expired");
+			return ResponseEntity.badRequest().body("Link expired.");
 		}
 		
 		

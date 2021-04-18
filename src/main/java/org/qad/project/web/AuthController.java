@@ -127,6 +127,52 @@ public class AuthController {
 			return ResponseEntity.badRequest().body("Account not found.");
 		}
 	}
+	
+
+	@PostMapping({"/singInGoogle"})
+	public ResponseEntity<?> singInGoogle(@RequestBody LinkedHashMap<String, String> obj) throws Exception {
+		
+		JSONObject l = new JSONObject(UtilsController.decrypt(obj.get("encrypted")).toString());
+
+		if ( l.get("userName")!=null && l.get("fullName")!=null && l.get("login")!=null && l.get("password")!=null) {
+			try {
+				//register
+				User u = this.adminService.register(l.get("fullName").toString(), l.get("userName").toString(), 
+						l.get("login").toString(), UtilsController.encrypt(l.get("password").toString()).toString());
+				
+				if (u != null) {
+					UserDetails userDetails = this.userDetailsService.loadUserByUsername(l.get("login").toString());
+					String token = this.jwtTokenUtil.generateToken(userDetails);
+
+					u.setJoinedDate(Instant.now());
+					u.setAvatar(l.get("avatar").toString());
+					
+					// mail is verified by default
+					u.setMailVerified(true);
+					
+					this.adminService.updateUser(Optional.of(u));
+					
+					log.info(u.getUsername() + " registred via google");
+					return ResponseEntity.ok(new LoginResponse(token));
+				} else {
+					//login
+					this.authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(l.get("login"), UtilsController.encrypt(l.get("password").toString())));
+					UserDetails userDetails = this.userDetailsService.loadUserByUsername(l.get("login").toString());
+					if(userDetails==null) return null;
+					String token = this.jwtTokenUtil.generateToken(userDetails);
+					String email = this.jwtTokenUtil.extractEmail(token);
+					Optional<User> user = this.adminService.getUserByEmail(email);
+					log.info((user.get()).getUsername() + " logged in via google");
+					this.utils.addActiveUser(this.activeUsers, user, token);
+					return ResponseEntity.ok(new LoginResponse(token));
+					
+				}
+			} catch (Exception e) {
+				return ResponseEntity.badRequest().body("Something went wrong");
+			}
+		}
+		return ResponseEntity.badRequest().body("Required colomuns are null");
+	}
 
 	@PostMapping({"/logout"})
 	public ResponseEntity<?> logout(@RequestParam String authorisationHeader) throws Exception {
@@ -156,6 +202,7 @@ public class AuthController {
 		headers.add("Responded", "AdminController");
 		if ( l.get("userName")!=null && (l.get("password")).equals(l.get("confirmPassword"))
 				&& Boolean.parseBoolean(l.get("terms"))) {
+			
 			try {
 				User u = this.adminService.register(l.get("fullName"), l.get("userName"), l.get("email"),
 						UtilsController.encrypt(l.get("password")).toString());
